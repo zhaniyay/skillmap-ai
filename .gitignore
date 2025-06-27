@@ -32,3 +32,5 @@ skillmap-backend/        # if you named your conda env folder inside the repo
 
 # —— Vite cache —— 
 .vite/
+
+
