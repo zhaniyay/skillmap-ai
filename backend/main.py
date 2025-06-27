@@ -8,12 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 
-# ——— Load env and configure OpenAI client ———
+# ——— Load environment and configure OpenAI client ———
 load_dotenv()
 client = OpenAI()
 
-# ——— FastAPI app & CORS setup ———
+# ——— FastAPI setup ———
 app = FastAPI()
+
+# Allow frontend on localhost:5173 (Vite)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -22,9 +24,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ——— Request model ———
+# ——— Request models ———
 class TextIn(BaseModel):
     text: str
+    goal: str
+
+class RoadmapIn(BaseModel):
+    skills: list[str]
     goal: str
 
 # ——— Health check ———
@@ -32,45 +38,42 @@ class TextIn(BaseModel):
 def read_root():
     return {"message": "SkillMap AI backend is running!"}
 
-# ——— Main endpoint ———
+# ——— Extract skills from resume text ———
 @app.post("/extract_skills")
 async def extract_skills(payload: TextIn):
-    # build the prompt
     prompt = f"""
-You are an expert career coach.
-Extract all the technical skills mentioned in this resume,
-and then suggest additional skills needed to become a {payload.goal}.
-Resume:
-\"\"\"{payload.text}\"\"\"
-Respond ONLY with valid JSON in this exact format:
-{{"skills":[...], "needed":[...]}}
-"""
+You are an expert career coach. Analyze the following resume text and suggest:
+1. A list of technical skills the candidate already has.
+2. A list of important skills the candidate should learn to become a successful {payload.goal}.
+Return the output in JSON format like this:
+{{
+  "skills": [...],
+  "needed": [...]
+}}
 
+Resume Text:
+\"\"\"
+{payload.text}
+\"\"\"
+"""
     try:
-        # call the new OpenAI v1 client
         resp = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You extract technical skills from resumes."},
-                {"role": "user",   "content": prompt},
-            ],
-            temperature=0.2,
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
         )
 
-        # get the assistant’s reply
         raw = resp.choices[0].message.content.strip()
         logging.info(f"GPT raw reply:\n{raw}")
 
-        # strip code fences if present
-        if raw.startswith("```") and raw.endswith("```"):
+        # Remove code fences if present
+        if raw.startswith("```"):
             raw = "\n".join(raw.splitlines()[1:-1]).strip()
 
-        # parse JSON
         data = json.loads(raw)
         return data
 
     except json.JSONDecodeError as e:
-        # bad JSON from GPT – return the raw reply for debugging
         raise HTTPException(
             status_code=502,
             detail=f"Failed to parse JSON: {e.msg}. GPT reply:\n{raw}"
@@ -79,10 +82,7 @@ Respond ONLY with valid JSON in this exact format:
         logging.exception("Error in /extract_skills")
         raise HTTPException(status_code=500, detail=str(e))
 
-class RoadmapIn(BaseModel):
-    skills: list[str]
-    goal: str
-
+# ——— Generate learning roadmap ———
 @app.post("/generate_roadmap")
 async def generate_roadmap(payload: RoadmapIn):
     prompt = f"""
@@ -92,7 +92,7 @@ Create a week-by-week learning roadmap, 4–6 weeks long.
 Respond ONLY with JSON in this format:
 {{
   "weeks": [
-    {{"title": "Week 1", "topics": ["topic1", "topic2"], "resources": ["link1","link2"]}},
+    {{"title": "Week 1", "topics": ["topic1", "topic2"], "resources": ["link1", "link2"]}},
     ...
   ]
 }}
@@ -106,10 +106,15 @@ Respond ONLY with JSON in this format:
             ],
             temperature=0.3,
         )
+
         raw = resp.choices[0].message.content.strip()
-        # strip code fences if any...
+
+        # Remove code fences if present
         if raw.startswith("```"):
-            raw = "\n".join(raw.splitlines()[1:-1])
+            raw = "\n".join(raw.splitlines()[1:-1]).strip()
+
         return json.loads(raw)
+
     except Exception as e:
+        logging.exception("Error in /generate_roadmap")
         raise HTTPException(status_code=500, detail=str(e))
