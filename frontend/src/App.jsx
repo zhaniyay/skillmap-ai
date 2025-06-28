@@ -7,22 +7,37 @@ function App() {
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingRoadmap, setLoadingRoadmap] = useState(false);
+  const [shareLink, setShareLink] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setResult(null);
+    setRoadmap(null);
+    setShareLink('');
+
+    if (text.trim().length < 30 || goal.trim().length < 3) {
+      setResult({ error: 'Please provide a more complete resume and valid career goal.' });
+      return;
+    }
+
     setLoading(true);
-    setRoadmap(null);              // clear any previous roadmap
     try {
       const res = await fetch('http://127.0.0.1:8000/extract_skills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, goal }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Server error');
+      }
+
       const data = await res.json();
       setResult(data);
     } catch (err) {
       console.error(err);
-      setResult({ error: 'Failed to fetch skills.' });
+      setResult({ error: err.message });
     }
     setLoading(false);
   };
@@ -36,6 +51,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ skills: result.skills, goal }),
       });
+
       const data = await res.json();
       setRoadmap(data.weeks);
     } catch (err) {
@@ -43,6 +59,20 @@ function App() {
       setRoadmap([{ title: 'Error', topics: [err.message], resources: [] }]);
     }
     setLoadingRoadmap(false);
+  };
+
+  const saveRoadmap = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/save_roadmap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roadmap }),
+      });
+      const data = await res.json();
+      setShareLink(`${window.location.origin}/shared/${data.id}`);
+    } catch (err) {
+      console.error('Error saving roadmap:', err);
+    }
   };
 
   return (
@@ -81,7 +111,6 @@ function App() {
           <h2>Skills to Learn</h2>
           <ul>{result.needed.map(n => <li key={n}>{n}</li>)}</ul>
 
-          {/* Roadmap button */}
           {!roadmap && (
             <button
               onClick={generateRoadmap}
@@ -95,8 +124,8 @@ function App() {
       )}
 
       {result?.error && (
-        <div style={{ marginTop: '2rem' }}>
-          <p style={{ color: 'red' }}>{result.error}</p>
+        <div style={{ marginTop: '2rem', color: 'red' }}>
+          <p>{result.error}</p>
         </div>
       )}
 
@@ -113,26 +142,43 @@ function App() {
                 marginBottom: '1rem'
               }}
             >
-              <h3 style={{ margin: 0 }}>{wk.title}</h3>
-              <ul style={{ margin: '0.5rem 0' }}>
-                {wk.topics.map((topic) => <li key={topic}>{topic}</li>)}
-              </ul>
-              <p style={{ margin: '0.5rem 0 0', fontWeight: 'bold' }}>Resources:</p>
-              <ul style={{ margin: '0.25rem 0 0' }}>
-                {wk.resources.map((resUrl) => (
-                  <li key={resUrl}>
-                    <a href={resUrl} target="_blank" rel="noopener noreferrer">
-                      {resUrl}
-                    </a>
+              <h3>{wk.title}</h3>
+              <ul>{wk.topics.map(topic => <li key={topic}>{topic}</li>)}</ul>
+              <p><strong>Resources:</strong></p>
+              <ul>
+                {wk.resources.map(res => (
+                  <li key={res}>
+                    <a href={res} target="_blank" rel="noopener noreferrer">{res}</a>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
+
+          {/* Save and share button */}
+          <button
+            onClick={saveRoadmap}
+            style={{ marginTop: '1rem' }}
+          >
+            Save & Generate Shareable Link
+          </button>
+
+          {/* Shareable link */}
+          {shareLink && (
+            <div style={{ marginTop: '1rem' }}>
+              <p><strong>Shareable Link:</strong></p>
+              <a href={shareLink} target="_blank" rel="noopener noreferrer">{shareLink}</a>
+            </div>
+          )}
         </div>
       )}
+
+      <footer style={{ textAlign: 'center', marginTop: '3rem', color: '#999' }}>
+        Built with ❤️ using FastAPI + React
+      </footer>
     </div>
   );
 }
 
 export default App;
+
