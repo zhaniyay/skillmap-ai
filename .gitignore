@@ -34,3 +34,4 @@ skillmap-backend/        # if you named your conda env folder inside the repo
 .vite/
 
 
+backend/.env
