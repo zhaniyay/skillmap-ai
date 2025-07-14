@@ -1,0 +1,12 @@
+[
+  {
+    "title": "FastAPI Basics",
+    "desc": "Learn backend APIs with FastAPI",
+    "url": "https://example.com/fastapi-basics"
+  },
+  {
+    "title": "Deep Learning",
+    "desc": "Intro to DL with PyTorch",
+    "url": "https://example.com/deep-learning"
+  }
+]
