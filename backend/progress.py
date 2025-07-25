@@ -1,13 +1,37 @@
 # backend/progress.py
-from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlmodel import SQLModel, Field, create_engine, Session, select, Relationship
 import os
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel
+from sqlalchemy import Column, JSON
+from models import User
 
 # 1) Определяем модель
 class Progress(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: str
-    step: str
-    done: bool = False
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id")
+    goal: str
+    skills: list = Field(default_factory=list, sa_column=Column(JSON))
+    roadmap: list = Field(default_factory=list, sa_column=Column(JSON))
+    completed_steps: list = Field(default_factory=list, sa_column=Column(JSON))  # now stores indices (ints)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+# Pydantic schemas
+class ProgressBase(BaseModel):
+    goal: str
+    skills: List[str]
+    roadmap: List[str]
+    completed_steps: List[int] = []
+
+class ProgressCreate(ProgressBase):
+    pass
+
+class ProgressOut(ProgressBase):
+    id: int
+    updated_at: datetime
+    class Config:
+        orm_mode = True
 
 # 2) Инитим движок SQLite
 DB_URL = os.getenv("PROGRESS_DB_URL", "sqlite:///progress.db")

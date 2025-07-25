@@ -29,15 +29,31 @@ export function uploadResume(file, goal) {
   return API.post('/upload_resume', form);
 }
 
-export function getProgress(userId) {
-  return API.get(`/progress/${userId}`);
+export function getProgress() {
+  // Returns the most recent progress for the logged-in user
+  return API.get('/progress/'); // <-- trailing slash
 }
 
-export function patchProgress(userId, step, done) {
-  // отправляем PATCH с query-параметрами
-  return API.patch(`/progress/${userId}`, null, {
-    params: { step, done }
-  });
+export function saveProgress(goal, skills, roadmap) {
+  // Save or update the user's progress
+  return API.post('/progress/', { goal, skills, roadmap }); // <-- trailing slash
+}
+
+export function getAllProgress() {
+  // Returns all progress entries for the logged-in user
+  return API.get('/progress/all/');
+}
+
+export function deleteProgress(id) {
+  return API.delete(`/progress/${id}/`);
+}
+
+export function renameProgress(id, new_goal) {
+  return API.patch(`/progress/${id}/`, { new_goal });
+}
+
+export function toggleStep(id, step_idx, done) {
+  return API.patch(`/progress/${id}/step/`, { step_idx, done });
 }
 
 

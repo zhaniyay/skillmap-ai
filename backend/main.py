@@ -25,16 +25,14 @@ from sqlmodel import SQLModel, Field, create_engine, Session, select
 
 from roadmap_generator import generate_roadmap
 from resume_parser import extract_text_from_pdf, extract_skills
-from progress import init_db, get_progress, update_progress
+from progress import init_db, Progress, ProgressBase, ProgressCreate, ProgressOut
+from progress_api import router as progress_router
+from deps import get_current_user, get_user_by_username, SECRET_KEY, ALGORITHM, oauth2_scheme
+from models import User
 
 # --- Auth setup ----------------------------------------------------
 
 # Models & engine
-class User(SQLModel, table=True):
-    id: str = Field(primary_key=True)
-    username: str
-    hashed_password: str
-
 DATABASE_URL = os.getenv("PROGRESS_DB_URL", "sqlite:///progress.db")
 engine = create_engine(DATABASE_URL, echo=False)
 
@@ -49,8 +47,6 @@ def verify_password(plain_pw, hashed_pw) -> bool:
     return pwd_context.verify(plain_pw, hashed_pw)
 
 # JWT settings
-SECRET_KEY = os.getenv("JWT_SECRET", "CHANGE_ME")
-ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 def create_access_token(username: str) -> str:
@@ -77,26 +73,6 @@ def authenticate_user(username: str, password: str):
         return None
     return user
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if not username:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = get_user_by_username(username)
-    if not user:
-        raise credentials_exception
-    return user
-
 # --- App setup -----------------------------------------------------
 
 app = FastAPI()
@@ -110,6 +86,9 @@ app.add_middleware(
 # Init both DBs
 init_db()
 init_auth_db()
+
+# Include progress router
+app.include_router(progress_router, prefix="/progress")
 
 # --- Data models --------------------------------------------------
 
@@ -180,21 +159,3 @@ async def upload_resume(
         print("❌ Exception in /upload_resume:")
         traceback.print_exc()
         raise HTTPException(500, "Internal Server Error")
-
-@app.get(
-    "/progress",
-    dependencies=[Depends(get_current_user)]
-)
-def read_progress(current_user: User = Depends(get_current_user)):
-    return [p.model_dump() for p in get_progress(current_user.id)]
-
-@app.patch(
-    "/progress",
-    dependencies=[Depends(get_current_user)]
-)
-def patch_progress(
-    step: str, done: bool,
-    current_user: User = Depends(get_current_user)
-):
-    prog = update_progress(current_user.id, step, done)
-    return prog.model_dump()
