@@ -1,42 +1,113 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for the goals list */
+.goals-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.goals-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
 }
 
-@keyframes logo-spin {
+.goals-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.goals-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom focus styles */
+.focus-ring:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #8b5cf6;
+  ring-offset: 2px;
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Progress circle animation */
+@keyframes progress-fill {
   from {
-    transform: rotate(0deg);
+    stroke-dasharray: 0 100;
   }
   to {
-    transform: rotate(360deg);
+    stroke-dasharray: var(--progress) 100;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.progress-circle {
+  animation: progress-fill 1s ease-out forwards;
 }
 
-.card {
-  padding: 2em;
+/* Button hover effects */
+.btn-gradient {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  transition: all 0.2s ease-in-out;
 }
 
-.read-the-docs {
-  color: #888;
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+}
+
+/* Skill tag animations */
+.skill-tag {
+  transition: all 0.2s ease-in-out;
+}
+
+.skill-tag:hover {
+  transform: scale(1.05);
+  background-color: #e0e7ff;
+}
+
+/* Roadmap step animations */
+.roadmap-step {
+  transition: all 0.2s ease-in-out;
+}
+
+.roadmap-step:hover {
+  transform: translateX(4px);
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #8b5cf6;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
