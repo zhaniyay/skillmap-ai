@@ -82,10 +82,7 @@ function App() {
     }
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('goal', goal);
-      const response = await uploadResume(formData);
+      const response = await uploadResume(file, goal);
       setResult(response.data);
       
       // Save progress

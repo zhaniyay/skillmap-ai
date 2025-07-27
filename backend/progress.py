@@ -3,7 +3,7 @@ from sqlmodel import SQLModel, Field, create_engine, Session, select, Relationsh
 import os
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, JSON
 from models import User
 
@@ -30,8 +30,8 @@ class ProgressCreate(ProgressBase):
 class ProgressOut(ProgressBase):
     id: int
     updated_at: datetime
-    class Config:
-        orm_mode = True
+    # Pydantic V2: replace orm_mode=True
+    model_config = ConfigDict(from_attributes=True)
 
 # 2) Инитим движок SQLite
 DB_URL = os.getenv("PROGRESS_DB_URL", "sqlite:///progress.db")
