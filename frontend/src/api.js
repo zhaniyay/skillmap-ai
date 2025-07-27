@@ -22,11 +22,8 @@ export function login(username, password) {
   data.append("password", password);
   return API.post("/token", data);
 }
-export function uploadResume(file, goal) {
-  const form = new FormData();
-  form.append('file', file);
-  form.append('goal', goal);
-  return API.post('/upload_resume', form);
+export function uploadResume(formData) {
+  return API.post('/upload_resume', formData);
 }
 
 export function getProgress() {

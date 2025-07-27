@@ -140,22 +140,47 @@ async def upload_resume(
     goal: str = Form(...)
 ):
     try:
+        print(f"📁 Received file: {file.filename}, content_type: {file.content_type}")
+        print(f"🎯 Goal: {goal}")
+        
+        # Validate file type
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(400, "Only PDF files are supported")
+        
         # Save PDF
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp.write(await file.read())
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            content = await file.read()
+            print(f"📄 File size: {len(content)} bytes")
+            tmp.write(content)
             tmp_path = tmp.name
 
         # Extract text & skills
+        print("🔍 Extracting text from PDF...")
         text = extract_text_from_pdf(tmp_path)
+        print(f"📝 Extracted text length: {len(text)} characters")
+        
         skills = extract_skills(text)
+        print(f"🛠️ Found skills: {skills}")
 
         # Generate roadmap & courses
+        print("🗺️ Generating roadmap...")
         result = generate_roadmap(skills, goal)
 
+        # Clean up temp file
+        os.unlink(tmp_path)
+        
         # Return combined
         return {"extracted_skills": skills, **result}
 
-    except Exception:
-        print("❌ Exception in /upload_resume:")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Exception in /upload_resume: {str(e)}")
         traceback.print_exc()
         raise HTTPException(500, "Internal Server Error")
+
+# --- Server startup -------------------------------------------
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlmodel import Session, select
+from sqlalchemy.orm import Session as SQLAlchemySession
+from sqlalchemy import inspect
 from typing import List
 from datetime import datetime
 from deps import get_current_user
@@ -104,12 +106,24 @@ def toggle_step(
     progress = db.get(Progress, progress_id)
     if not progress or progress.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Progress not found")
+    
+    # Create a new list to ensure SQLAlchemy detects the change
+    current_steps = list(progress.completed_steps or [])
+    
     if req.done:
-        if req.step_idx not in progress.completed_steps:
-            progress.completed_steps.append(req.step_idx)
+        if req.step_idx not in current_steps:
+            current_steps.append(req.step_idx)
     else:
-        progress.completed_steps = [i for i in progress.completed_steps if i != req.step_idx]
+        current_steps = [i for i in current_steps if i != req.step_idx]
+    
+    # Assign the new list to trigger SQLAlchemy change detection
+    progress.completed_steps = current_steps
     progress.updated_at = datetime.utcnow()
+    
+    # Explicitly mark the field as modified for JSON columns
+    from sqlalchemy.orm import attributes
+    attributes.flag_modified(progress, 'completed_steps')
+    
     db.commit()
     db.refresh(progress)
     return progress 

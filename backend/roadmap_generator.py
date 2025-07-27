@@ -20,10 +20,16 @@ def generate_roadmap(user_skills: list[str], goal: str) -> dict:
     base_prompt = (
         f"You are a career mentor. A user has the following skills: "
         f"{', '.join(user_skills)}.\n"
-        f"They want to become a {goal}. Suggest a personalized, "
-        f"step-by-step roadmap to reach this goal, "
-        f"highlighting what they need to learn or improve.\n"
-        f"Return the result as a numbered list."
+        f"They want to become a {goal}. Create a personalized CV roadmap "
+        f"with exactly three sections:\n\n"
+        f"1. **Overview** – Write a 2–3 sentence summary of what makes a great CV for the {goal} role.\n\n"
+        f"2. **Skills to Learn** – List 5–8 concrete, real-world skills they should develop, "
+        f"formatted as unchecked markdown checkboxes (- [ ] Skill name). "
+        f"Focus on specific, actionable skills like software tools, languages, certifications, or techniques.\n\n"
+        f"3. **Additional CV Tips** – Provide 3–5 bullet points of actionable resume-enhancement "
+        f"techniques such as quantifying results, tailoring to ATS systems, formatting best practices, "
+        f"or industry-specific advice.\n\n"
+        f"Format your response with clear section headers and follow the structure exactly."
     )
 
     # 2) Подтягиваем контекст из памяти
