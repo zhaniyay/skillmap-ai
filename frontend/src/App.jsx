@@ -160,20 +160,32 @@ function App() {
   const handleToggleStep = async (stepIdx) => {
     if (!selectedGoalId) return;
     try {
-      await toggleStep(selectedGoalId, stepIdx, !(result.completed_steps || []).includes(stepIdx));
+      // Get current completion status
+      const currentCompleted = result.completed_steps || [];
+      const isCurrentlyCompleted = currentCompleted.includes(stepIdx);
+      
+      // Call backend to toggle step
+      await toggleStep(selectedGoalId, stepIdx, !isCurrentlyCompleted);
+      
+      // Refresh data from backend
       const { data: allProgress } = await getAllProgress();
       setGoals(allProgress);
+      
+      // Find the updated entry and update result state
       const entry = allProgress.find(g => g.id === selectedGoalId);
       if (entry) {
-        setResult({
+        setResult(prevResult => ({
+          ...prevResult,
           extracted_skills: entry.skills || [],
           roadmap: (entry.roadmap || []).join('\n'),
           completed_steps: entry.completed_steps || [],
-          recommended_courses: result?.recommended_courses || []
-        });
+          recommended_courses: prevResult?.recommended_courses || []
+        }));
       }
     } catch (error) {
       console.error('Error toggling step:', error);
+      // Optionally show user-friendly error message
+      alert('Failed to update step. Please try again.');
     }
   };
 
