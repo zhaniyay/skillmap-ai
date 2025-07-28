@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, JSON
 from models import User
 
-# 1) Определяем модель
+# 1) Define the model
 class Progress(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id")
@@ -33,7 +33,7 @@ class ProgressOut(ProgressBase):
     # Pydantic V2: replace orm_mode=True
     model_config = ConfigDict(from_attributes=True)
 
-# 2) Инитим движок SQLite
+# 2) Initialize SQLite engine
 DB_URL = os.getenv("PROGRESS_DB_URL", "sqlite:///progress.db")
 engine = create_engine(DB_URL, echo=False)
 

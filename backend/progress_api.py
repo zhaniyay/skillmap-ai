@@ -44,6 +44,7 @@ def create_or_update_progress(
             goal=data.goal,
             skills=data.skills,
             roadmap=data.roadmap,
+            completed_steps=[],
             updated_at=datetime.utcnow()
         )
         db.add(progress)
