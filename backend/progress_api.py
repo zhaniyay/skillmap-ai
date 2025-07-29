@@ -37,6 +37,11 @@ def create_or_update_progress(
     if progress:
         progress.skills = data.skills
         progress.roadmap = data.roadmap
+        # Update structured roadmap fields
+        progress.cv_assessment = getattr(data, 'cv_assessment', '')
+        progress.skill_gaps = getattr(data, 'skill_gaps', [])
+        progress.learning_path = getattr(data, 'learning_path', [])
+        progress.cv_tips = getattr(data, 'cv_tips', [])
         progress.updated_at = datetime.utcnow()
     else:
         progress = Progress(
@@ -44,6 +49,11 @@ def create_or_update_progress(
             goal=data.goal,
             skills=data.skills,
             roadmap=data.roadmap,
+            # Initialize structured roadmap fields
+            cv_assessment=getattr(data, 'cv_assessment', ''),
+            skill_gaps=getattr(data, 'skill_gaps', []),
+            learning_path=getattr(data, 'learning_path', []),
+            cv_tips=getattr(data, 'cv_tips', []),
             completed_steps=[],
             updated_at=datetime.utcnow()
         )

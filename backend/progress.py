@@ -13,7 +13,12 @@ class Progress(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id")
     goal: str
     skills: list = Field(default_factory=list, sa_column=Column(JSON))
-    roadmap: list = Field(default_factory=list, sa_column=Column(JSON))
+    roadmap: list = Field(default_factory=list, sa_column=Column(JSON))  # Keep for backwards compatibility
+    # New structured roadmap fields
+    cv_assessment: Optional[str] = Field(default="", nullable=True)
+    skill_gaps: list = Field(default_factory=list, sa_column=Column(JSON))
+    learning_path: list = Field(default_factory=list, sa_column=Column(JSON))
+    cv_tips: list = Field(default_factory=list, sa_column=Column(JSON))
     completed_steps: list = Field(default_factory=list, sa_column=Column(JSON))  # now stores indices (ints)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
@@ -21,7 +26,12 @@ class Progress(SQLModel, table=True):
 class ProgressBase(BaseModel):
     goal: str
     skills: List[str]
-    roadmap: List[str]
+    roadmap: List[str]  # Keep for backwards compatibility
+    # New structured roadmap fields
+    cv_assessment: Optional[str] = ""
+    skill_gaps: List[str] = []
+    learning_path: List[str] = []
+    cv_tips: List[str] = []
     completed_steps: List[int] = []
 
 class ProgressCreate(ProgressBase):

@@ -1,0 +1,6 @@
+# Testing dependencies for backend
+pytest==7.4.4
+pytest-asyncio==0.23.2
+httpx==0.26.0
+pytest-cov==4.1.0
+faker==22.0.0

@@ -54,11 +54,6 @@ def create_access_token(username: str) -> str:
     to_encode = {"sub": username, "exp": expire}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def get_user_by_username(username: str):
-    with Session(engine) as sess:
-        stmt = select(User).where(User.username == username)
-        return sess.exec(stmt).first()
-
 def create_user(username: str, password: str):
     hashed = hash_password(password)
     user = User(id=username, username=username, hashed_password=hashed)
@@ -75,11 +70,20 @@ def authenticate_user(username: str, password: str):
 
 # --- App setup -----------------------------------------------------
 
+# Configure CORS origins securely
+def get_cors_origins():
+    origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+    if origins == "*":
+        print("⚠️  WARNING: CORS_ORIGINS set to wildcard (*) - this is unsafe for production!")
+        return ["*"]
+    return [origin.strip() for origin in origins.split(",") if origin.strip()]
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],    # in prod specify your front-end URL
-    allow_methods=["*"],
+    allow_origins=get_cors_origins(),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -92,44 +96,139 @@ app.include_router(progress_router, prefix="/progress")
 
 # --- Data models --------------------------------------------------
 
+from pydantic import validator, Field
+from typing import List, Optional
+
 class SkillRequest(BaseModel):
-    skills: list[str]
-    goal: str
+    skills: List[str] = Field(..., min_items=1, max_items=20, description="List of user skills")
+    goal: str = Field(..., min_length=3, max_length=200, description="Career goal description")
+    
+    @validator('skills')
+    def validate_skills(cls, v):
+        if not v:
+            raise ValueError('At least one skill is required')
+        # Remove empty strings and duplicates
+        cleaned_skills = list(set([skill.strip() for skill in v if skill.strip()]))
+        if not cleaned_skills:
+            raise ValueError('At least one non-empty skill is required')
+        return cleaned_skills
+    
+    @validator('goal')
+    def validate_goal(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Goal cannot be empty')
+        return v.strip()
+
+class UploadResumeRequest(BaseModel):
+    goal: str = Field(..., min_length=3, max_length=200, description="Career goal description")
+    
+    @validator('goal')
+    def validate_goal(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Goal cannot be empty')
+        return v.strip()
+
+class ErrorResponse(BaseModel):
+    detail: str
+    error_code: Optional[str] = None
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class SuccessResponse(BaseModel):
+    message: str
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int = ACCESS_TOKEN_EXPIRE_MINUTES * 60  # in seconds
+
+class Course(BaseModel):
+    title: str
+    description: Optional[str] = None
+    url: Optional[str] = None
+    provider: Optional[str] = None
+
+class RoadmapResponse(BaseModel):
+    roadmap: str = Field(..., description="Generated roadmap content")
+    recommended_courses: List[Course] = Field(default_factory=list, description="Recommended courses")
+
+class ResumeUploadResponse(BaseModel):
+    extracted_skills: List[str] = Field(..., description="Skills extracted from resume")
+    roadmap: str = Field(..., description="Generated roadmap content")
+    recommended_courses: List[Course] = Field(default_factory=list, description="Recommended courses")
+
+class StatusResponse(BaseModel):
+    message: str
+    status: str = "healthy"
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
 # --- Auth endpoints -----------------------------------------------
 
-@app.post("/signup")
+@app.post("/signup", response_model=SuccessResponse)
 def signup(form: OAuth2PasswordRequestForm = Depends()):
-    if get_user_by_username(form.username):
+    # Validate username
+    if not form.username or len(form.username.strip()) < 3:
+        raise HTTPException(400, "Username must be at least 3 characters long")
+    if len(form.username) > 50:
+        raise HTTPException(400, "Username must be less than 50 characters")
+    
+    # Validate password
+    if not form.password or len(form.password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters long")
+    
+    if get_user_by_username(form.username.strip()):
         raise HTTPException(400, "Username already registered")
-    create_user(form.username, form.password)
-    return {"msg": "User created"}
+    
+    create_user(form.username.strip(), form.password)
+    return SuccessResponse(message="User created successfully")
 
-@app.post("/token")
+@app.post("/token", response_model=TokenResponse)
 def login(form: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form.username, form.password)
+    # Validate input
+    if not form.username or not form.username.strip():
+        raise HTTPException(400, "Username is required")
+    if not form.password:
+        raise HTTPException(400, "Password is required")
+    
+    user = authenticate_user(form.username.strip(), form.password)
     if not user:
         raise HTTPException(401, "Incorrect username or password")
+    
     token = create_access_token(user.username)
-    return {"access_token": token, "token_type": "bearer"}
+    return TokenResponse(access_token=token)
 
 # --- Protected endpoints ------------------------------------------
 
-@app.get("/", dependencies=[Depends(get_current_user)])
+@app.get("/", response_model=StatusResponse, dependencies=[Depends(get_current_user)])
 def root():
-    return {"message": "SkillMap AI backend is running 🚀"}
+    return StatusResponse(message="SkillMap AI backend is running 🚀")
 
 @app.post(
     "/generate_roadmap",
+    response_model=RoadmapResponse,
     dependencies=[Depends(get_current_user)]
 )
 async def roadmap_endpoint(data: SkillRequest):
     try:
-        return generate_roadmap(data.skills, data.goal)
-    except Exception:
-        print("❌ Exception in /generate_roadmap:")
+        result = generate_roadmap(data.skills, data.goal)
+        # Convert courses to proper format
+        courses = [Course(title=course.get('title', ''), 
+                         description=course.get('description'),
+                         url=course.get('url'),
+                         provider=course.get('provider')) 
+                  for course in result.get('recommended_courses', [])]
+        
+        return RoadmapResponse(
+            roadmap=result.get('roadmap', ''),
+            recommended_courses=courses
+        )
+    except ValueError as e:
+        print(f"⚠️ Validation error in /generate_roadmap: {str(e)}")
+        raise HTTPException(400, f"Invalid input: {str(e)}")
+    except Exception as e:
+        print(f"❌ Exception in /generate_roadmap: {str(e)}")
         traceback.print_exc()
-        raise HTTPException(500, "Internal Server Error")
+        raise HTTPException(500, "Failed to generate roadmap. Please try again later.")
 
 @app.post(
     "/upload_resume",
@@ -143,14 +242,30 @@ async def upload_resume(
         print(f"📁 Received file: {file.filename}, content_type: {file.content_type}")
         print(f"🎯 Goal: {goal}")
         
+        # Security validations
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB limit
+        ALLOWED_CONTENT_TYPES = ['application/pdf']
+        
         # Validate file type
-        if not file.filename.lower().endswith('.pdf'):
+        if not file.filename or not file.filename.lower().endswith('.pdf'):
             raise HTTPException(400, "Only PDF files are supported")
+        
+        # Validate content type
+        if file.content_type not in ALLOWED_CONTENT_TYPES:
+            raise HTTPException(400, f"Invalid content type. Expected: {ALLOWED_CONTENT_TYPES}")
+        
+        # Read and validate file size
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(400, f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB")
+        
+        if len(content) == 0:
+            raise HTTPException(400, "File is empty")
+        
+        print(f"📄 File size: {len(content)} bytes (within {MAX_FILE_SIZE // (1024*1024)}MB limit)")
         
         # Save PDF
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-            content = await file.read()
-            print(f"📄 File size: {len(content)} bytes")
             tmp.write(content)
             tmp_path = tmp.name
 
