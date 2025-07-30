@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
 import { FiChevronDown, FiChevronUp, FiCheckCircle, FiAlertCircle, FiInfo, FiAward } from 'react-icons/fi';
+import { MarkdownText } from '../utils/markdownParser.jsx';
 
 const RoadmapView = ({ result, onToggleStep, goal }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -47,6 +48,11 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
   }, [result, goal]);
   
   // Extract different sections from the roadmap with fallbacks
+  console.log('🔍 FRONTEND DEBUG - CV Assessment Data:');
+  console.log('  result?.cv_assessment:', result?.cv_assessment);
+  console.log('  typeof cv_assessment:', typeof result?.cv_assessment);
+  console.log('  cv_assessment length:', result?.cv_assessment?.length);
+  
   const roadmapSections = {
     // CV Overview - handle both string and object formats
     overview: result?.cv_assessment ? [
@@ -76,6 +82,13 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
       type: 'tip'
     })) : []
   };
+  
+  console.log('🔍 FRONTEND DEBUG - Roadmap Sections:');
+  console.log('  overview.length:', roadmapSections.overview.length);
+  console.log('  overview array:', roadmapSections.overview);
+  console.log('  skillGaps.length:', roadmapSections.skillGaps.length);
+  console.log('  learningPath.length:', roadmapSections.learningPath.length);
+  console.log('  cvTips.length:', roadmapSections.cvTips.length);
   
   // Only learning path steps are trackable/checkable for progress
   const trackableSteps = React.useMemo(() => {
@@ -235,9 +248,9 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
                         <FiInfo className="text-blue-600 text-sm" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-gray-800 font-medium leading-relaxed">
+                        <MarkdownText className="text-gray-800 font-medium leading-relaxed">
                           {roadmapSections.overview[0]?.text || 'No CV assessment available'}
-                        </p>
+                        </MarkdownText>
                       </div>
                     </div>
                   </div>
@@ -278,7 +291,9 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
                             <span className="text-orange-600 font-semibold text-sm">{idx + 1}</span>
                           </div>
                           <div className="flex-1">
-                            <p className="text-gray-800 font-medium leading-relaxed">{skill.text}</p>
+                            <MarkdownText className="text-gray-800 font-medium leading-relaxed">
+                              {skill.text}
+                            </MarkdownText>
                           </div>
                         </div>
                       </div>
@@ -320,7 +335,9 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
                             className="mt-1.5 h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                           />
                           <div className="ml-3 flex-1">
-                            <p className="text-gray-800 font-medium leading-relaxed">{item.text}</p>
+                            <MarkdownText className="text-gray-800 font-medium leading-relaxed">
+                              {item.text}
+                            </MarkdownText>
                           </div>
                         </div>
                       </div>
@@ -354,7 +371,9 @@ const RoadmapView = ({ result, onToggleStep, goal }) => {
                             <FiAward className="text-green-600 text-sm" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-gray-800 font-medium leading-relaxed">{tip.text}</p>
+                            <MarkdownText className="text-gray-800 font-medium leading-relaxed">
+                              {tip.text}
+                            </MarkdownText>
                           </div>
                         </div>
                       </div>

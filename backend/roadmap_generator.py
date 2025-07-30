@@ -79,40 +79,70 @@ def generate_roadmap(user_skills: list[str], goal: str) -> dict:
             current_section = None
             current_content = []
             
-            for line in lines:
+            print(f"🔍 DEBUG: Parsing roadmap with {len(lines)} lines")
+            
+            for i, line in enumerate(lines):
                 line = line.strip()
                 if not line:
                     continue
                     
-                # Detect section headers
-                if "CV Overview" in line or "Assessment" in line:
+                print(f"🔍 Line {i}: '{line}' -> Current section: {current_section}")
+                    
+                # Detect section headers with more precise matching
+                line_lower = line.lower()
+                
+                # More flexible section detection
+                is_section_header = False
+                
+                # CV Overview & Assessment section (1.)
+                if (line.startswith("1.") and ("cv overview" in line_lower or "assessment" in line_lower)) or \
+                   ("cv overview" in line_lower and "assessment" in line_lower):
+                    print(f"✅ Found CV Assessment section: {line}")
                     if current_section and current_content:
                         _save_section_content(sections, current_section, current_content)
                     current_section = "cv_assessment"
                     current_content = []
-                elif "Skills Gap" in line or "Gap Analysis" in line:
+                    is_section_header = True
+                    
+                # Skills Gap Analysis section (2.)
+                elif (line.startswith("2.") and ("skill" in line_lower and "gap" in line_lower)) or \
+                     ("skills gap" in line_lower and "analysis" in line_lower):
+                    print(f"✅ Found Skills Gap section: {line}")
                     if current_section and current_content:
                         _save_section_content(sections, current_section, current_content)
                     current_section = "skill_gaps"
                     current_content = []
-                elif "Learning Roadmap" in line or "Roadmap" in line:
+                    is_section_header = True
+                    
+                # Learning Roadmap section (3.)
+                elif (line.startswith("3.") and ("learning" in line_lower or "roadmap" in line_lower)) or \
+                     ("learning roadmap" in line_lower):
+                    print(f"✅ Found Learning Path section: {line}")
                     if current_section and current_content:
                         _save_section_content(sections, current_section, current_content)
                     current_section = "learning_path"
                     current_content = []
-                elif "CV Enhancement" in line or "Tips" in line:
+                    is_section_header = True
+                    
+                # CV Enhancement Tips section (4.)
+                elif (line.startswith("4.") and ("cv" in line_lower or "tips" in line_lower)) or \
+                     ("cv enhancement" in line_lower and "tips" in line_lower):
+                    print(f"✅ Found CV Tips section: {line}")
                     if current_section and current_content:
                         _save_section_content(sections, current_section, current_content)
                     current_section = "cv_tips"
                     current_content = []
-                elif current_section and line and not line.startswith('**') and not line.startswith('#'):
-                    # Add content to current section
+                    is_section_header = True
+                elif current_section and line and not line.startswith('**') and not line.startswith('#') and not is_section_header:
+                    # Add content to current section (skip section headers)
                     if line.startswith(('-', '•', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.')):
                         # Remove bullet points and numbering
                         clean_line = line.lstrip('-•123456789. ').strip()
                         if clean_line:
+                            print(f"📝 Adding to {current_section}: {clean_line}")
                             current_content.append(clean_line)
                     elif len(line) > 10:  # Avoid short fragments
+                        print(f"📝 Adding to {current_section}: {line}")
                         current_content.append(line)
             
             # Save the last section
@@ -124,20 +154,100 @@ def generate_roadmap(user_skills: list[str], goal: str) -> dict:
             # Fallback: put everything in learning_path
             sections["learning_path"] = [roadmap_text]
             
+        # Ensure CV assessment has content - fallback to first part of roadmap if empty
+        if not sections["cv_assessment"] and roadmap_text:
+            # Try to extract first paragraph as CV assessment
+            first_paragraph = roadmap_text.split('\n\n')[0] if '\n\n' in roadmap_text else roadmap_text[:200]
+            sections["cv_assessment"] = first_paragraph
+            print(f"🔄 Fallback: Using first paragraph as CV assessment: {first_paragraph[:50]}...")
+            
         return sections
     
     def _save_section_content(sections, section_name, content):
         """Helper to save content to the appropriate section"""
         if section_name == "cv_assessment":
             sections["cv_assessment"] = " ".join(content)
+        elif section_name == "learning_path":
+            # Special handling for learning path - split into individual actionable steps
+            for item in content:
+                individual_steps = _split_learning_path_into_steps(item)
+                sections[section_name].extend(individual_steps)
         else:
             sections[section_name].extend(content)
+    
+    def _split_learning_path_into_steps(text):
+        """Split learning path text into individual actionable steps"""
+        steps = []
+        
+        # Split by common sentence patterns that indicate separate steps
+        import re
+        
+        # Patterns that typically indicate step boundaries
+        step_patterns = [
+            r'\. Next,',
+            r'\. Then,', 
+            r'\. After that,',
+            r'\. This will be followed by',
+            r'\. Simultaneously,',
+            r'\. Finally,',
+            r'\. Subsequently,',
+            r'\. Additionally,'
+        ]
+        
+        # Split the text by these patterns
+        current_text = text
+        for pattern in step_patterns:
+            parts = re.split(pattern, current_text, flags=re.IGNORECASE)
+            if len(parts) > 1:
+                # Rejoin with a delimiter we can split on later
+                current_text = '|||STEP_BREAK|||'.join(parts)
+        
+        # Split by the delimiter
+        potential_steps = current_text.split('|||STEP_BREAK|||')
+        
+        for step in potential_steps:
+            step = step.strip()
+            if len(step) > 20:  # Only include substantial steps
+                # Clean up the step text
+                step = step.strip('.').strip()
+                
+                # Extract time estimates if present
+                time_match = re.search(r'\((\d+[-–]?\d*\s*months?)\)', step)
+                if time_match:
+                    # Keep the time estimate for clarity
+                    steps.append(step)
+                else:
+                    # Add the step even without time estimate
+                    steps.append(step)
+        
+        # If no clear splits found, try to split by periods and filter
+        if len(steps) <= 1 and len(text) > 100:
+            sentences = text.split('. ')
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if len(sentence) > 30 and ('learn' in sentence.lower() or 
+                                         'understand' in sentence.lower() or
+                                         'focus' in sentence.lower() or
+                                         'obtain' in sentence.lower() or
+                                         'familiarize' in sentence.lower()):
+                    steps.append(sentence.strip('.'))
+        
+        # Ensure we have at least the original text if no splits worked
+        if not steps:
+            steps = [text]
+            
+        print(f"🔄 Split learning path into {len(steps)} steps:")
+        for i, step in enumerate(steps):
+            print(f"  {i+1}. {step[:60]}...")
+            
+        return steps
     
     # Parse the roadmap into structured sections
     structured_roadmap = parse_roadmap_sections(roadmap_text)
     
     print(f"📊 Structured roadmap sections:")
     print(f"  - CV Assessment: {len(structured_roadmap['cv_assessment'])} chars")
+    print(f"    Content: '{structured_roadmap['cv_assessment'][:100]}...'")  # Show first 100 chars
     print(f"  - Skill Gaps: {len(structured_roadmap['skill_gaps'])} items")
     print(f"  - Learning Path: {len(structured_roadmap['learning_path'])} items")
     print(f"  - CV Tips: {len(structured_roadmap['cv_tips'])} items")
