@@ -10,6 +10,9 @@ A full-stack career development platform that helps users create personalized le
 - **Course Recommendations**: Get relevant course suggestions
 - **User Authentication**: Secure JWT-based authentication
 - **Modern UI**: Clean, responsive interface built with React and Tailwind CSS
+<img width="1137" height="800" alt="Снимок экрана 2025-07-30 в 15 12 44" src="https://github.com/user-attachments/assets/58c672cc-5d6f-4328-93b6-e7309db55bd1" />
+<img width="1320" height="776" alt="Снимок экрана 2025-07-30 в 15 15 18" src="https://github.com/user-attachments/assets/1b85c1cc-9b20-4770-b78c-b05c2a7bf932" />
+<img width="1328" height="772" alt="Снимок экрана 2025-07-30 в 15 12 22" src="https://github.com/user-attachments/assets/f322ea1e-8862-40ec-921d-ff52618af5fc" />
 
 ## 📸 Screenshots
 
