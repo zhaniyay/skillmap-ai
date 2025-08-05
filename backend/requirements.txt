@@ -1,24 +1,10 @@
-# Core FastAPI dependencies
-fastapi==0.115.6
-uvicorn==0.32.1
-python-multipart==0.0.12
-
-# Authentication
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-
-# Database
-sqlalchemy==2.0.36
-
-# Environment
-python-dotenv==1.0.1
-
-# AI/ML
-openai==1.58.1
-PyMuPDF==1.25.2
-scikit-learn==1.6.0
-faiss-cpu==1.9.0.post1
-numpy==2.2.1
-
-# HTTP requests
-requests==2.32.5
+fastapi
+uvicorn[standard]
+sqlmodel
+python-dotenv
+PyMuPDF
+python-jose
+python-multipart
+passlib
+requests
+httpx<0.24.0
