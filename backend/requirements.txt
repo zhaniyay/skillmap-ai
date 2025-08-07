@@ -1,12 +1,35 @@
-fastapi==0.116.1
+# ASGI server
 uvicorn==0.35.0
+
+# Web framework
+fastapi==0.116.1
+starlette==0.47.2
+
+# ORM + миграции
 sqlmodel==0.0.24
-sentence-transformers==5.1.0
-faiss-cpu==1.11.0.post1
-torch==2.8.0
-transformers==4.55.0
-openai==1.99.1
-python-dotenv==1.1.1
+SQLAlchemy==2.0.42
+alembic==1.16.4
+
+# Валидация и типы
+pydantic==2.11.7
+typing-extensions==4.14.1
+
+# Авторизация
 python-jose==3.5.0
-bcrypt==4.3.0
-networkx==3.5
+python-dotenv==1.1.1
+passlib[bcrypt]==1.7.4        # нужен для CryptContext
+
+# Работа с формами/файлами
+python-multipart==0.0.20
+
+# HTTP-клиент (если нужен)
+httpx<0.23.0,>=0.18.2
+
+# Модуль генерации «roadmap»
+sentence-transformers==5.1.0
+transformers==4.55.0          # зависимость sentence-transformers
+torch==2.8.0                  # зависимость sentence-transformers
+faiss-cpu==1.11.0.post1       # если вы используете FAISS в модели
+
+# Прогресс-бары (опционально)
+tqdm==4.67.1
