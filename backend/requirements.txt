@@ -60,8 +60,6 @@ passlib==1.7.4
 pexpect==4.9.0
 pickleshare==0.7.5
 pillow==11.3.0
-pipdeptree==2.28.0
-pipreqs==0.5.0
 platformdirs==4.3.8
 pluggy==1.6.0
 prompt_toolkit==3.0.51
