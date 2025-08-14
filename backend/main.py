@@ -166,19 +166,27 @@ class StatusResponse(BaseModel):
 
 @app.post("/signup", response_model=SuccessResponse)
 def signup(form: OAuth2PasswordRequestForm = Depends()):
+    # Debug logging
+    print(f"🔍 Signup attempt - Username: '{form.username}', Password length: {len(form.password) if form.password else 0}")
+    
     # Validate username
     if not form.username or len(form.username.strip()) < 3:
+        print(f"❌ Username validation failed: '{form.username}' (length: {len(form.username) if form.username else 0})")
         raise HTTPException(400, "Username must be at least 3 characters long")
     if len(form.username) > 50:
+        print(f"❌ Username too long: '{form.username}' (length: {len(form.username)})")
         raise HTTPException(400, "Username must be less than 50 characters")
     
     # Validate password
     if not form.password or len(form.password) < 6:
+        print(f"❌ Password validation failed: length {len(form.password) if form.password else 0}")
         raise HTTPException(400, "Password must be at least 6 characters long")
     
     if get_user_by_username(form.username.strip()):
+        print(f"❌ Username already exists: '{form.username}'")
         raise HTTPException(400, "Username already registered")
     
+    print(f"✅ Creating user: '{form.username}'")
     create_user(form.username.strip(), form.password)
     return SuccessResponse(message="User created successfully")
 

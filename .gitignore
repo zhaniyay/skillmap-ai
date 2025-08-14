@@ -4,3 +4,4 @@ node_modules/
 *.pyc
 .env
 backend/progress.db
+.DS_Store
