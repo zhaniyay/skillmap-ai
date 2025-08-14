@@ -11,6 +11,20 @@ A full-stack career development platform that generates personalized learning ro
 - Secure JWT-based user authentication
 - Modern React interface with Tailwind CSS
 
+## Screenshots
+
+### Login Page
+<img width="1328" height="772" alt="Login interface" src="https://github.com/user-attachments/assets/f322ea1e-8862-40ec-921d-ff52618af5fc" />
+Clean and modern authentication interface with SkillMap AI branding
+
+### Dashboard
+<img width="1320" height="776" alt="User dashboard" src="https://github.com/user-attachments/assets/1b85c1cc-9b20-4770-b78c-b05c2a7bf932" />
+Personalized dashboard showing user progress, active goals, and completion statistics
+
+### Goals Management
+<img width="1137" height="800" alt="Goals interface" src="https://github.com/user-attachments/assets/58d672cc-5d6f-4328-93b6-e7309db55bd1" />
+Goal creation interface with AI-powered resume upload feature and progress tracking
+
 ## Architecture
 
 ### Backend (Python/FastAPI)
