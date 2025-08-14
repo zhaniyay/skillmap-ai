@@ -1,263 +1,126 @@
 # SkillMap AI - Personalized Learning Roadmaps
 
-A full-stack career development platform that helps users create personalized learning roadmaps based on their skills and career goals using AI-powered recommendations.
+A full-stack career development platform that generates personalized learning roadmaps based on user skills and career goals using AI-powered recommendations.
 
-## 🚀 Features
+## Features
 
-- **Resume Upload & Analysis**: Upload PDF resumes for automatic skill extraction
-- **AI-Powered Roadmaps**: Generate personalized learning paths using OpenAI
-- **Progress Tracking**: Track completion of roadmap steps
-- **Course Recommendations**: Get relevant course suggestions
-- **User Authentication**: Secure JWT-based authentication
-- **Modern UI**: Clean, responsive interface built with React and Tailwind CSS
+- Resume upload and automatic skill extraction from PDF files
+- AI-powered roadmap generation using OpenAI
+- Progress tracking for roadmap completion
+- Course recommendations based on learning goals
+- Secure JWT-based user authentication
+- Modern React interface with Tailwind CSS
 
-## 📸 Screenshots
-
-### Login Page
-<img width="1328" height="772" alt="Снимок экрана 2025-07-30 в 15 12 22" src="https://github.com/user-attachments/assets/f322ea1e-8862-40ec-921d-ff52618af5fc" />
-*Clean and modern authentication interface with SkillMap AI branding*
-
-### Dashboard
-<img width="1320" height="776" alt="Снимок экрана 2025-07-30 в 15 15 18" src="https://github.com/user-attachments/assets/1b85c1cc-9b20-4770-b78c-b05c2a7bf932" />
-*Personalized dashboard showing user progress, active goals, and completion statistics*
-
-### Goals Management
-<img width="1137" height="800" alt="Снимок экрана 2025-07-30 в 15 12 44" src="https://github.com/user-attachments/assets/58c672cc-5d6f-4328-93b6-e7309db55bd1" />
-*Goal creation interface with AI-powered resume upload feature and progress tracking*
-
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (Python/FastAPI)
-- **FastAPI** for REST API
-- **SQLAlchemy** with SQLite for data persistence
-- **OpenAI API** for roadmap generation
-- **JWT** authentication
-- **PyMuPDF** for PDF processing
-- **Pydantic** for data validation
+- FastAPI for REST API endpoints
+- SQLModel with SQLite for data persistence
+- OpenAI API integration for roadmap generation
+- JWT authentication with secure token handling
+- PyMuPDF for PDF text extraction
+- Pydantic for data validation and serialization
 
 ### Frontend (React/Vite)
-- **React 19** with modern hooks
-- **Vite** for fast development
-- **Tailwind CSS** for styling
-- **Axios** for API communication
-- **React Router** for navigation
-- **React Hot Toast** for notifications
+- React with modern hooks and context
+- Vite for fast development and building
+- Tailwind CSS for responsive styling
+- Axios for API communication
+- React Router for navigation
+- React Hot Toast for user notifications
 
-## 📋 Prerequisites
+## Prerequisites
 
-- **Python 3.8+**
-- **Node.js 16+**
-- **OpenAI API Key** (get from [OpenAI Platform](https://platform.openai.com/api-keys))
+- Python 3.8+
+- Node.js 16+
+- OpenAI API Key
 
-## 🛠️ Installation & Setup
+## Installation
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd pet2
-```
+### Backend Setup
 
-### 2. Backend Setup
-
-#### Install Dependencies
+1. Navigate to the backend directory:
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-#### Environment Configuration
+2. Create environment file:
 ```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Edit .env with your actual values
-nano .env
-```
-
-**Required Environment Variables:**
-```bash
-# Generate a secure JWT secret (run this command to generate one):
-# python -c "import secrets; print(secrets.token_urlsafe(32))"
+# Create .env file with required variables
 JWT_SECRET=your_secure_jwt_secret_here
-
-# Get your OpenAI API key from https://platform.openai.com/api-keys
 OPENAI_API_KEY=your_openai_api_key_here
-
-# Database URL (SQLite by default)
 PROGRESS_DB_URL=sqlite:///progress.db
-
-# CORS Origins (frontend URLs)
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-#### Initialize Database
+3. Start the server:
 ```bash
-# The database will be created automatically when you first run the server
 python main.py
 ```
 
-### 3. Frontend Setup
+### Frontend Setup
 
-#### Install Dependencies
+1. Navigate to the frontend directory:
 ```bash
 cd frontend
 npm install
 ```
 
-#### Environment Configuration
+2. Create environment file:
 ```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Edit .env with your backend URL (default should work for local development)
-nano .env
-```
-
-**Frontend Environment Variables:**
-```bash
-# Backend API URL
+# Create .env file with backend URL
 VITE_API_BASE_URL=http://localhost:8000
-
-# Optional: Customize other settings
-VITE_APP_NAME=SkillMap AI
-VITE_ENABLE_DEBUG=true
 ```
 
-## 🚀 Running the Application
-
-### Development Mode
-
-#### Start Backend Server
+3. Start development server:
 ```bash
-cd backend
-python main.py
-```
-Backend will be available at: http://localhost:8000
-
-#### Start Frontend Development Server
-```bash
-cd frontend
 npm run dev
 ```
-Frontend will be available at: http://localhost:5173
 
-### Production Deployment
+## Usage
 
-#### Backend Production
-```bash
-cd backend
-# Install production dependencies
-pip install -r requirements.txt
+The application runs on:
+- Backend: http://localhost:8000
+- Frontend: http://localhost:5173
 
-# Set production environment variables
-export JWT_SECRET="your-production-jwt-secret"
-export OPENAI_API_KEY="your-openai-api-key"
-export CORS_ORIGINS="https://yourdomain.com"
+## API Endpoints
 
-# Run with production server
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+### Authentication
+- `POST /signup` - User registration
+- `POST /token` - User login
 
-#### Frontend Production
-```bash
-cd frontend
-# Build for production
-npm run build
-
-# Serve the built files with your preferred web server
-# Example with a simple HTTP server:
-npx serve -s dist -l 3000
-```
-
-## 🔧 Configuration
-
-### Security Settings
-
-1. **JWT Secret**: Always use a cryptographically secure random string in production
-2. **CORS Origins**: Restrict to your actual frontend domains in production
-3. **File Upload**: Default 10MB limit for PDF files
-
-### API Endpoints
-
-#### Authentication
-- `POST /signup` - Create new user account
-- `POST /token` - Login and get access token
-
-#### Roadmap Generation
-- `POST /generate_roadmap` - Generate roadmap from skills and goal
+### Roadmap Generation
+- `POST /generate_roadmap` - Create roadmap from skills and goal
 - `POST /upload_resume` - Upload resume and generate roadmap
 
-#### Progress Management
-- `GET /progress/` - Get user's latest progress
-- `POST /progress/` - Save/update progress
-- `GET /progress/all/` - Get all user progress entries
+### Progress Management
+- `GET /progress/` - Get user progress
+- `POST /progress/` - Save progress
+- `GET /progress/all/` - Get all progress entries
 - `DELETE /progress/{id}/` - Delete progress entry
-- `PATCH /progress/{id}/` - Rename progress entry
+- `PATCH /progress/{id}/` - Update progress entry
 - `PATCH /progress/{id}/step/` - Toggle step completion
 
-## 🧪 Testing
+## Development
 
-### Backend Testing
-```bash
-cd backend
-# Run the server and test endpoints
-python main.py
+### Backend
+- Database migrations handled by Alembic
+- Environment variables loaded via python-dotenv
+- CORS configured for frontend communication
 
-# Test with curl
-curl -X GET http://localhost:8000/
-```
+### Frontend
+- Environment configuration centralized in `src/config/environment.js`
+- API calls handled through axios interceptors
+- Error boundaries and error handling implemented
 
-### Frontend Testing
-```bash
-cd frontend
-# Run linting
-npm run lint
+## Troubleshooting
 
-# Build test
-npm run build
-```
+- Ensure all environment variables are set correctly
+- Check CORS origins match your frontend URL
+- Verify OpenAI API key is valid and has credits
+- Ensure uploaded files are PDF format and under 10MB limit
 
-## 🐛 Troubleshooting
+## API Documentation
 
-### Common Issues
-
-1. **"JWT_SECRET not set" warning**
-   - Solution: Set `JWT_SECRET` in your `.env` file
-
-2. **CORS errors**
-   - Solution: Check `CORS_ORIGINS` in backend `.env` matches your frontend URL
-
-3. **OpenAI API errors**
-   - Solution: Verify your `OPENAI_API_KEY` is valid and has sufficient credits
-
-4. **File upload errors**
-   - Solution: Ensure uploaded files are PDF format and under 10MB
-
-### Development Tips
-
-- Enable debug mode in frontend: `VITE_ENABLE_DEBUG=true`
-- Check browser console for detailed error messages
-- Backend logs are printed to console when running `python main.py`
-
-## 📚 API Documentation
-
-When running the backend server, visit http://localhost:8000/docs for interactive API documentation powered by FastAPI's automatic OpenAPI generation.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-[Add your license information here]
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review the API documentation at `/docs`
-3. Open an issue in the repository
+Interactive API docs available at http://localhost:8000/docs when the backend is running.
